@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import List
 import stat
 import streamlit as st
-
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
@@ -12,19 +11,17 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import OllamaLLM
 from langchain.chains import RetrievalQA
 from langchain.schema import Document
-
-# Custom Retriever Imports
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 
-# -------- CONFIG -------- #
+
 UPLOAD_DIR = "uploaded_pdfs"
 EMBED_MODEL = "nomic-embed-text"
 CHROMA_PATH = "chroma_db_store"
 LLM_MODEL = "llama3"
 SIM_THRESHOLD = 0.6
 TOP_K = 5
-# ------------------------ #
+
 
 def ensure_upload_dir():
     Path(UPLOAD_DIR).mkdir(exist_ok=True)
@@ -93,7 +90,7 @@ def build_chain(vectordb: Chroma) -> RetrievalQA:
     )
     return chain
 
-# ---------------- STREAMLIT APP ---------------- #
+
 
 def main():
     st.set_page_config(
@@ -103,7 +100,7 @@ def main():
         initial_sidebar_state="expanded"
     )
 
-    # Custom CSS for cleaner look
+   
     st.markdown("""
     <style>
         .stChatMessage {border-radius: 10px; padding: 10px;}
@@ -113,7 +110,7 @@ def main():
 
     ensure_upload_dir()
 
-    # ----- SIDEBAR ----- #
+ 
     with st.sidebar:
         st.title("📈 Financial Analyst MVP")
         st.markdown("---")
@@ -148,22 +145,19 @@ def main():
         st.markdown("---")
         st.caption(f"Core: {LLM_MODEL} | Embed: {EMBED_MODEL}")
 
-    # ----- MAIN CHAT ----- #
+  
     st.title("SEC Filing & IPO Researcher")
     st.markdown("Ask questions about the uploaded financial documents. The AI analyzes text chunks to provide evidence-based answers.")
 
-    # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Check for Chain
+
     if not st.session_state.get("db_ready"):
         st.warning("👈 Please upload documents and click **Build Vector DB** to start.")
-        # Display placeholder chat
         with st.chat_message("assistant"):
             st.write("I'm ready to analyze financial reports once you upload them.")
     else:
-        # Display chat history
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
@@ -171,14 +165,11 @@ def main():
                     with st.expander("🔍 View Source Excerpts"):
                         st.markdown(message["sources"])
 
-        # Chat Input
         if query := st.chat_input("Ex: What are the primary risk factors in the Meesho IPO?"):
-            # 1. User Message
             st.session_state.messages.append({"role": "user", "content": query})
             with st.chat_message("user"):
                 st.markdown(query)
 
-            # 2. Assistant Processing
             with st.chat_message("assistant"):
                 message_placeholder = st.empty()
                 with st.spinner("Thinking..."):
@@ -187,7 +178,6 @@ def main():
                     answer = result["result"]
                     source_docs = result["source_documents"]
 
-                    # Format Sources for display
                     source_text = ""
                     for i, doc in enumerate(source_docs):
                         source_name = Path(doc.metadata.get('source', 'unknown')).name
@@ -197,7 +187,6 @@ def main():
                 with st.expander("🔍 View Source Excerpts"):
                     st.markdown(source_text)
 
-            # 3. Save History
             st.session_state.messages.append({
                 "role": "assistant",
                 "content": answer,
@@ -205,4 +194,5 @@ def main():
             })
 
 if __name__ == "__main__":
+
     main()
